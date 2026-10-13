@@ -2,91 +2,122 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+
+async function requireAdminUser() {
+  const currentUser = await requireUser();
+
+  if (currentUser.role !== "ADMIN") {
+    throw new Error("Only admins can manage resources.");
+  }
+
+  return currentUser;
+}
 
 function getString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
+  return String(formData.get(key) ?? "").trim();
+}
+
+function getOptionalCapacity(formData: FormData) {
+  const raw = String(formData.get("capacity") ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const capacity = Number(raw);
+
+  if (!Number.isInteger(capacity) || capacity < 1) {
+    throw new Error("Capacity must be a positive whole number.");
+  }
+
+  return capacity;
+}
+
+function validateResourceType(type: string) {
+  if (type !== "FACILITY" && type !== "RESOURCE") {
+    throw new Error("Invalid resource type.");
+  }
+
+  return type;
+}
+
+function validateResourceStatus(status: string) {
+  if (
+    status !== "AVAILABLE" &&
+    status !== "MAINTENANCE" &&
+    status !== "INACTIVE"
+  ) {
+    throw new Error("Invalid resource status.");
+  }
+
+  return status;
 }
 
 export async function createResource(formData: FormData) {
-  await requireAdmin();
+  await requireAdminUser();
 
   const name = getString(formData, "name");
-  const description = getString(formData, "description");
-  const type = getString(formData, "type");
+  const type = validateResourceType(getString(formData, "type"));
   const location = getString(formData, "location");
-  const status = getString(formData, "status");
-  const capacityValue = getString(formData, "capacity");
+  const description = getString(formData, "description");
+  const status = validateResourceStatus(getString(formData, "status"));
+  const capacity = getOptionalCapacity(formData);
 
-  if (!name || !type || !location || !status) {
-    throw new Error("Name, type, location, and status are required.");
-  }
-
-  const capacity =
-    capacityValue.length > 0 ? Number.parseInt(capacityValue, 10) : null;
-
-  if (capacityValue.length > 0 && Number.isNaN(capacity)) {
-    throw new Error("Capacity must be a valid number.");
-  }
-
-  if (capacity !== null && capacity < 1) {
-    throw new Error("Capacity must be at least 1.");
+  if (!name || !location) {
+    throw new Error("Name and location are required.");
   }
 
   await prisma.resource.create({
     data: {
       name,
-      description: description || null,
-      type: type === "FACILITY" ? "FACILITY" : "RESOURCE",
+      type,
       location,
-      status:
-        status === "MAINTENANCE"
-          ? "MAINTENANCE"
-          : status === "INACTIVE"
-            ? "INACTIVE"
-            : "AVAILABLE",
+      description: description || null,
       capacity,
+      status,
     },
   });
 
   revalidatePath("/");
-  revalidatePath("/bookings/new");
   revalidatePath("/admin/resources");
+  revalidatePath("/bookings/new");
 }
 
-export async function deleteResource(formData: FormData) {
-  await requireAdmin();
+export async function updateResource(formData: FormData) {
+  await requireAdminUser();
 
   const resourceId = getString(formData, "resourceId");
+  const name = getString(formData, "name");
+  const type = validateResourceType(getString(formData, "type"));
+  const location = getString(formData, "location");
+  const description = getString(formData, "description");
+  const status = validateResourceStatus(getString(formData, "status"));
+  const capacity = getOptionalCapacity(formData);
 
   if (!resourceId) {
-    throw new Error("Resource id is required.");
+    throw new Error("Resource ID is required.");
   }
 
-  const futureApprovedBookings = await prisma.booking.count({
-    where: {
-      resourceId,
-      status: "APPROVED",
-      endTime: {
-        gte: new Date(),
-      },
-    },
-  });
-
-  if (futureApprovedBookings > 0) {
-    throw new Error(
-      "Cannot delete a resource with current or future approved bookings.",
-    );
+  if (!name || !location) {
+    throw new Error("Name and location are required.");
   }
 
-  await prisma.resource.delete({
+  await prisma.resource.update({
     where: {
       id: resourceId,
     },
+    data: {
+      name,
+      type,
+      location,
+      description: description || null,
+      capacity,
+      status,
+    },
   });
 
   revalidatePath("/");
-  revalidatePath("/bookings/new");
   revalidatePath("/admin/resources");
+  revalidatePath("/bookings/new");
 }
