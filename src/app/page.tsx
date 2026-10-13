@@ -4,8 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { logoutUser } from "@/app/login/actions";
 
-export const instant = false;
-
 function formatDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-LK", {
     dateStyle: "medium",
@@ -87,6 +85,7 @@ export default async function HomePage() {
                     >
                       Manage resources
                     </Link>
+
                     <Link
                       href="/admin/bookings"
                       className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
@@ -112,16 +111,19 @@ export default async function HomePage() {
                 <p className="text-sm text-slate-300">Resources</p>
                 <p className="mt-2 text-3xl font-semibold">{resources.length}</p>
               </div>
+
               <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
                 <p className="text-sm text-slate-300">Approved</p>
                 <p className="mt-2 text-3xl font-semibold">
                   {approvedBookings.length}
                 </p>
               </div>
+
               <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
                 <p className="text-sm text-slate-300">Pending</p>
                 <p className="mt-2 text-3xl font-semibold">{pendingBookings}</p>
               </div>
+
               <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
                 <p className="text-sm text-slate-300">Role</p>
                 <p className="mt-2 text-lg font-semibold">{currentUser.role}</p>
@@ -158,6 +160,7 @@ export default async function HomePage() {
                         {resource.name}
                       </h3>
                     </div>
+
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${
                         resource.status === "AVAILABLE"
@@ -216,6 +219,7 @@ export default async function HomePage() {
                         {booking.team ? ` · ${booking.team.name}` : ""}
                       </p>
                     </div>
+
                     <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
                       {booking.status}
                     </span>
