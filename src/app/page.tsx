@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { logoutUser } from "@/app/login/actions";
 
+export const instant = false;
+
 function formatDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-LK", {
     dateStyle: "medium",

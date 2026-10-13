@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { logoutUser } from "@/app/login/actions";
+import { cancelBooking } from "./actions";
 
 export const instant = false;
 
@@ -24,6 +25,10 @@ function getStatusClasses(status: string) {
 
   if (status === "REJECTED") {
     return "bg-rose-100 text-rose-700";
+  }
+
+  if (status === "CANCELLED") {
+    return "bg-slate-200 text-slate-700";
   }
 
   return "bg-slate-200 text-slate-700";
@@ -55,7 +60,7 @@ export default async function MyBookingsPage() {
     (booking) => booking.status === "APPROVED",
   ).length;
 
-  const rejectedCount = bookings.filter(
+  const rejectedOrCancelledCount = bookings.filter(
     (booking) =>
       booking.status === "REJECTED" || booking.status === "CANCELLED",
   ).length;
@@ -130,7 +135,9 @@ export default async function MyBookingsPage() {
 
             <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
               <p className="text-sm text-slate-300">Rejected / cancelled</p>
-              <p className="mt-2 text-3xl font-semibold">{rejectedCount}</p>
+              <p className="mt-2 text-3xl font-semibold">
+                {rejectedOrCancelledCount}
+              </p>
             </div>
           </div>
         </header>
@@ -166,6 +173,7 @@ export default async function MyBookingsPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         {booking.resource.type}
                       </p>
+
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
                           booking.status,
@@ -219,6 +227,19 @@ export default async function MyBookingsPage() {
                       {booking.adminNote}
                     </p>
                   </div>
+                ) : null}
+
+                {booking.status === "PENDING" ? (
+                  <form action={cancelBooking} className="mt-5">
+                    <input type="hidden" name="bookingId" value={booking.id} />
+
+                    <button
+                      type="submit"
+                      className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                    >
+                      Cancel request
+                    </button>
+                  </form>
                 ) : null}
               </article>
             ))}

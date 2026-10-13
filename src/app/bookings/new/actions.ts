@@ -1,93 +1,102 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
-function getString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
-}
+export type CreateBookingState = {
+  error: string | null;
+};
 
-export async function createBookingRequest(formData: FormData) {
+export async function createBooking(
+  _prevState: CreateBookingState,
+  formData: FormData,
+): Promise<CreateBookingState> {
   const currentUser = await requireUser();
 
-  const resourceId = getString(formData, "resourceId");
-  const teamId = getString(formData, "teamId");
-  const purpose = getString(formData, "purpose");
-  const startTimeRaw = getString(formData, "startTime");
-  const endTimeRaw = getString(formData, "endTime");
+  const resourceId = String(formData.get("resourceId") ?? "").trim();
+  const teamIdRaw = String(formData.get("teamId") ?? "").trim();
+  const purpose = String(formData.get("purpose") ?? "").trim();
+  const startTimeRaw = String(formData.get("startTime") ?? "").trim();
+  const endTimeRaw = String(formData.get("endTime") ?? "").trim();
 
   if (!resourceId || !purpose || !startTimeRaw || !endTimeRaw) {
-    throw new Error("All required fields must be filled.");
+    return { error: "Please fill in all required fields." };
   }
 
   const startTime = new Date(startTimeRaw);
   const endTime = new Date(endTimeRaw);
 
   if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
-    throw new Error("Invalid start or end time.");
+    return { error: "Please provide valid booking dates and times." };
   }
 
   if (endTime <= startTime) {
-    throw new Error("End time must be after start time.");
+    return { error: "End time must be later than start time." };
   }
 
   const resource = await prisma.resource.findUnique({
     where: { id: resourceId },
+    select: { id: true, status: true },
   });
 
   if (!resource) {
-    throw new Error("Selected resource was not found.");
+    return { error: "Selected resource was not found." };
   }
 
   if (resource.status !== "AVAILABLE") {
-    throw new Error("Only available resources can be requested.");
+    return { error: "This resource is not currently available for booking." };
   }
 
-  const overlappingApprovedBooking = await prisma.booking.findFirst({
+  if (teamIdRaw) {
+    const team = await prisma.team.findUnique({
+      where: { id: teamIdRaw },
+      select: { id: true },
+    });
+
+    if (!team) {
+      return { error: "Selected team was not found." };
+    }
+  }
+
+  const conflictingBooking = await prisma.booking.findFirst({
     where: {
       resourceId,
-      status: "APPROVED",
-      startTime: {
-        lt: endTime,
+      status: {
+        in: ["PENDING", "APPROVED"],
       },
-      endTime: {
-        gt: startTime,
-      },
+      AND: [
+        {
+          startTime: {
+            lt: endTime,
+          },
+        },
+        {
+          endTime: {
+            gt: startTime,
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      status: true,
     },
   });
 
-  if (overlappingApprovedBooking) {
-    throw new Error("This resource is already booked for the selected time.");
-  }
-
-  if (teamId) {
-    const membership = await prisma.teamMember.findFirst({
-      where: {
-        teamId,
-        userId: currentUser.id,
-      },
-    });
-
-    const ownsTeam = await prisma.team.findFirst({
-      where: {
-        id: teamId,
-        ownerId: currentUser.id,
-      },
-    });
-
-    if (!membership && !ownsTeam && currentUser.role !== "ADMIN") {
-      throw new Error("You can only request bookings for your own team.");
-    }
+  if (conflictingBooking) {
+    return {
+      error:
+        "This resource already has a pending or approved booking for an overlapping time range.",
+    };
   }
 
   await prisma.booking.create({
     data: {
       resourceId,
       requesterId: currentUser.id,
-      teamId: teamId || null,
+      teamId: teamIdRaw || null,
       purpose,
       startTime,
       endTime,
@@ -96,8 +105,7 @@ export async function createBookingRequest(formData: FormData) {
   });
 
   revalidatePath("/");
-  revalidatePath("/bookings/new");
+  revalidatePath("/bookings");
   revalidatePath("/admin/bookings");
-
-  redirect("/bookings/new?success=1");
+  redirect("/bookings");
 }
