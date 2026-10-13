@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { approveBooking, rejectBooking } from "./actions";
+import { requireAdmin } from "@/lib/auth";
 
 export const instant = false;
 
@@ -13,6 +14,7 @@ function formatDateTime(date: Date) {
 }
 
 export default async function AdminBookingsPage() {
+  await requireAdmin();
   await connection();
 
   const [pendingBookings, approvedBookings, rejectedBookings] =

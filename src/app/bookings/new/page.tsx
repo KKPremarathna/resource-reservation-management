@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import { createBookingRequest } from "./actions";
+import { logoutUser } from "@/app/login/actions";
 
 export const instant = false;
 
@@ -20,28 +22,51 @@ function formatDateTimeLocal(date: Date) {
 export default async function NewBookingPage({ searchParams }: PageProps) {
   await connection();
 
+  const currentUser = await requireUser();
   const params = await searchParams;
 
-  const [resources, users, teams] = await Promise.all([
+  const [resources, teams] = await Promise.all([
     prisma.resource.findMany({
       where: {
         status: "AVAILABLE",
       },
       orderBy: { name: "asc" },
     }),
-    prisma.user.findMany({
-      orderBy: { name: "asc" },
-    }),
-    prisma.team.findMany({
-      include: {
-        members: {
+    currentUser.role === "ADMIN"
+      ? prisma.team.findMany({
           include: {
-            user: true,
+            members: {
+              include: {
+                user: true,
+              },
+            },
           },
-        },
-      },
-      orderBy: { name: "asc" },
-    }),
+          orderBy: { name: "asc" },
+        })
+      : prisma.team.findMany({
+          where: {
+            OR: [
+              {
+                ownerId: currentUser.id,
+              },
+              {
+                members: {
+                  some: {
+                    userId: currentUser.id,
+                  },
+                },
+              },
+            ],
+          },
+          include: {
+            members: {
+              include: {
+                user: true,
+              },
+            },
+          },
+          orderBy: { name: "asc" },
+        }),
   ]);
 
   const now = new Date();
@@ -49,30 +74,47 @@ export default async function NewBookingPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
-      <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
         <header className="rounded-3xl bg-slate-900 px-6 py-8 text-white shadow-lg sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="space-y-3">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-slate-200">
+                    Booking Request
+                  </span>
+                  <span className="inline-flex rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-200">
+                    Signed in as {currentUser.name}
+                  </span>
+                </div>
+
+                <div>
+                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                    Request a reservation
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+                    Select an available facility or resource and submit it for
+                    admin approval.
+                  </p>
+                </div>
+              </div>
+
               <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-slate-200">
-                  Booking Request
-                </span>
                 <Link
                   href="/"
-                  className="inline-flex rounded-full border border-white/15 px-3 py-1 text-sm text-slate-200 transition hover:bg-white/10"
+                  className="inline-flex rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-200"
                 >
                   Back to dashboard
                 </Link>
-              </div>
 
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Request a reservation
-                </h1>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                  Select an available facility or resource and submit it for admin
-                  approval.
-                </p>
+                <form action={logoutUser}>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-2xl border border-rose-300/25 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/10"
+                  >
+                    Logout
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -92,7 +134,11 @@ export default async function NewBookingPage({ searchParams }: PageProps) {
                 New booking request
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Fill the booking details and submit the request.
+                Fill the booking details and submit the request as{" "}
+                <span className="font-medium text-slate-900">
+                  {currentUser.name}
+                </span>
+                .
               </p>
             </div>
 
@@ -122,24 +168,18 @@ export default async function NewBookingPage({ searchParams }: PageProps) {
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <label
-                    htmlFor="requesterId"
+                    htmlFor="requestedBy"
                     className="text-sm font-medium text-slate-700"
                   >
                     Requested by
                   </label>
-                  <select
-                    id="requesterId"
-                    name="requesterId"
-                    required
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-                  >
-                    <option value="">Select a user</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} · {user.role}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    id="requestedBy"
+                    type="text"
+                    value={`${currentUser.name} · ${currentUser.role}`}
+                    readOnly
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-600 outline-none"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -277,9 +317,10 @@ export default async function NewBookingPage({ searchParams }: PageProps) {
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-              <h2 className="text-2xl font-semibold tracking-tight">Teams</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">Your teams</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Team booking requests can later trigger notifications for members.
+                You can submit team booking requests only for teams you belong to
+                or own.
               </p>
 
               <div className="mt-6 space-y-4">
@@ -309,7 +350,7 @@ export default async function NewBookingPage({ searchParams }: PageProps) {
 
                 {teams.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                    No teams found.
+                    You are not assigned to any teams yet.
                   </div>
                 ) : null}
               </div>

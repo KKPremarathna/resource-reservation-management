@@ -2,19 +2,22 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
 }
 
-async function revalidateBookingPages() {
+function revalidateBookingPages() {
   revalidatePath("/");
   revalidatePath("/bookings/new");
   revalidatePath("/admin/bookings");
 }
 
 export async function approveBooking(formData: FormData) {
+  await requireAdmin();
+
   const bookingId = getString(formData, "bookingId");
   const adminNote = getString(formData, "adminNote");
 
@@ -62,10 +65,12 @@ export async function approveBooking(formData: FormData) {
     },
   });
 
-  await revalidateBookingPages();
+  revalidateBookingPages();
 }
 
 export async function rejectBooking(formData: FormData) {
+  await requireAdmin();
+
   const bookingId = getString(formData, "bookingId");
   const adminNote = getString(formData, "adminNote");
 
@@ -93,5 +98,5 @@ export async function rejectBooking(formData: FormData) {
     },
   });
 
-  await revalidateBookingPages();
+  revalidateBookingPages();
 }

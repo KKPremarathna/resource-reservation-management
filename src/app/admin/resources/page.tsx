@@ -2,10 +2,12 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createResource, deleteResource } from "./actions";
+import { requireAdmin } from "@/lib/auth";
 
 export const instant = false;
 
 export default async function AdminResourcesPage() {
+  await requireAdmin();
   await connection();
 
   const resources = await prisma.resource.findMany({

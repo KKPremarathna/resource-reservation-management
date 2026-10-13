@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -9,6 +10,8 @@ function getString(formData: FormData, key: string) {
 }
 
 export async function createResource(formData: FormData) {
+  await requireAdmin();
+
   const name = getString(formData, "name");
   const description = getString(formData, "description");
   const type = getString(formData, "type");
@@ -25,6 +28,10 @@ export async function createResource(formData: FormData) {
 
   if (capacityValue.length > 0 && Number.isNaN(capacity)) {
     throw new Error("Capacity must be a valid number.");
+  }
+
+  if (capacity !== null && capacity < 1) {
+    throw new Error("Capacity must be at least 1.");
   }
 
   await prisma.resource.create({
@@ -44,10 +51,13 @@ export async function createResource(formData: FormData) {
   });
 
   revalidatePath("/");
+  revalidatePath("/bookings/new");
   revalidatePath("/admin/resources");
 }
 
 export async function deleteResource(formData: FormData) {
+  await requireAdmin();
+
   const resourceId = getString(formData, "resourceId");
 
   if (!resourceId) {
@@ -77,5 +87,6 @@ export async function deleteResource(formData: FormData) {
   });
 
   revalidatePath("/");
+  revalidatePath("/bookings/new");
   revalidatePath("/admin/resources");
 }
