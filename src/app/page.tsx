@@ -66,6 +66,13 @@ export default async function HomePage() {
 
               <div className="flex flex-wrap items-center gap-3">
                 <Link
+                  href="/bookings"
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  My bookings
+                </Link>
+
+                <Link
                   href="/bookings/new"
                   className="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-200"
                 >
