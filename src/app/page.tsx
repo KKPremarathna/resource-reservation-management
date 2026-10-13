@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
+import { logoutUser } from "@/app/login/actions";
 
 export const instant = false;
 
@@ -12,6 +15,8 @@ function formatDateTime(date: Date) {
 
 export default async function HomePage() {
   await connection();
+
+  const currentUser = await requireUser();
 
   const [resources, approvedBookings, pendingBookings] = await Promise.all([
     prisma.resource.findMany({
@@ -36,23 +41,66 @@ export default async function HomePage() {
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
         <header className="rounded-3xl bg-slate-900 px-6 py-8 text-white shadow-lg sm:px-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl space-y-4">
-              <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-slate-200">
-                PrimeWave Lab Technical Assessment
-              </span>
-              <div className="space-y-3">
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Reservify
-                </h1>
-                <p className="text-base leading-7 text-slate-300 sm:text-lg">
-                  A resource reservation management system for shared facilities,
-                  equipment, and team bookings.
-                </p>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-slate-200">
+                    PrimeWave Lab Technical Assessment
+                  </span>
+                  <span className="inline-flex rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-200">
+                    Signed in as {currentUser.name}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                    Reservify
+                  </h1>
+                  <p className="text-base leading-7 text-slate-300 sm:text-lg">
+                    A resource reservation management system for shared
+                    facilities, equipment, and team bookings.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/bookings/new"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-200"
+                >
+                  New booking
+                </Link>
+
+                {currentUser.role === "ADMIN" ? (
+                  <>
+                    <Link
+                      href="/admin/resources"
+                      className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                    >
+                      Manage resources
+                    </Link>
+                    <Link
+                      href="/admin/bookings"
+                      className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                    >
+                      Review bookings
+                    </Link>
+                  </>
+                ) : null}
+
+                <form action={logoutUser}>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-2xl border border-rose-300/25 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/10"
+                  >
+                    Logout
+                  </button>
+                </form>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
                 <p className="text-sm text-slate-300">Resources</p>
                 <p className="mt-2 text-3xl font-semibold">{resources.length}</p>
@@ -63,9 +111,13 @@ export default async function HomePage() {
                   {approvedBookings.length}
                 </p>
               </div>
-              <div className="col-span-2 rounded-2xl bg-white/10 p-4 backdrop-blur sm:col-span-1">
+              <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
                 <p className="text-sm text-slate-300">Pending</p>
                 <p className="mt-2 text-3xl font-semibold">{pendingBookings}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                <p className="text-sm text-slate-300">Role</p>
+                <p className="mt-2 text-lg font-semibold">{currentUser.role}</p>
               </div>
             </div>
           </div>
