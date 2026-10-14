@@ -13,14 +13,8 @@ type PageProps = {
 };
 
 function getErrorMessage(error?: string) {
-  if (error === "missing") {
-    return "Email and password are required.";
-  }
-
-  if (error === "invalid") {
-    return "Invalid email or password.";
-  }
-
+  if (error === "missing") return "Email and password are required.";
+  if (error === "invalid") return "Invalid email or password.";
   return null;
 }
 
@@ -28,58 +22,88 @@ export default async function LoginPage({ searchParams }: PageProps) {
   await connection();
 
   const currentUser = await getCurrentUser();
-
-  if (currentUser) {
-    redirect("/");
-  }
+  if (currentUser) redirect("/");
 
   const params = await searchParams;
   const errorMessage = getErrorMessage(params.error);
 
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid w-full gap-8 lg:grid-cols-[1fr_0.95fr]">
-          <div className="rounded-3xl bg-slate-900 px-6 py-8 text-white shadow-lg sm:px-8 sm:py-10">
-            <div className="space-y-5">
-              <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-slate-200">
-                Reservify Secure Access
+    <div className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen">
+        {/* ── Left panel ── */}
+        <div className="hidden flex-col justify-between bg-gradient-to-br from-indigo-700 via-indigo-800 to-indigo-900 px-10 py-12 text-white lg:flex lg:w-[52%]">
+          {/* Brand */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+              <svg
+                className="h-5 w-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
+              </svg>
+            </div>
+            <span className="text-lg font-bold tracking-tight">Reservify</span>
+          </div>
+
+          {/* Main copy */}
+          <div className="space-y-6">
+            <div>
+              <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-200 ring-1 ring-white/10">
+                Secure Access
               </span>
+              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
+                Resource Reservation
+                <br />
+                Made Simple
+              </h1>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-indigo-100">
+                Access the reservation system using your credentials. Admins can
+                manage resources and approve requests; users can submit
+                reservations.
+              </p>
+            </div>
 
-              <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Sign in to continue
-                </h1>
-                <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                  Access the resource reservation system using your email and
-                  password. Admin users can manage resources and approve booking
-                  requests, while individual users can submit reservations.
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-                  <p className="text-sm text-slate-300">Admin demo account</p>
-                  <p className="mt-2 text-lg font-semibold">
+            {/* Demo credentials */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-300">
+                Demo Accounts
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-white/8 p-4 ring-1 ring-white/10">
+                  <p className="text-xs font-medium text-indigo-300">
+                    Admin demo
+                  </p>
+                  <p className="mt-2 text-sm font-semibold">
                     admin@reservify.local
                   </p>
-                  <p className="mt-1 text-sm text-slate-300">Admin123!</p>
+                  <p className="mt-0.5 font-mono text-xs text-indigo-200">
+                    Admin123!
+                  </p>
                 </div>
-
-                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-                  <p className="text-sm text-slate-300">User demo account</p>
-                  <p className="mt-2 text-lg font-semibold">
+                <div className="rounded-xl bg-white/8 p-4 ring-1 ring-white/10">
+                  <p className="text-xs font-medium text-indigo-300">
+                    User demo
+                  </p>
+                  <p className="mt-2 text-sm font-semibold">
                     kavindu@reservify.local
                   </p>
-                  <p className="mt-1 text-sm text-slate-300">User123!</p>
+                  <p className="mt-0.5 font-mono text-xs text-indigo-200">
+                    User123!
+                  </p>
                 </div>
               </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm text-slate-200">
-                  Additional user accounts:
+              <div className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
+                <p className="text-xs font-medium text-indigo-300">
+                  Additional users
                 </p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <ul className="mt-2 space-y-1 font-mono text-xs text-indigo-200">
                   <li>kavishka@reservify.local / User123!</li>
                   <li>nimal@reservify.local / User123!</li>
                 </ul>
@@ -87,44 +111,89 @@ export default async function LoginPage({ searchParams }: PageProps) {
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight">
-                Login
+          <p className="text-xs text-indigo-400">
+            © 2026 Reservify · Resource Reservation Management
+          </p>
+        </div>
+
+        {/* ── Right panel – Login form ── */}
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 sm:px-10">
+          {/* Mobile brand */}
+          <div className="mb-8 flex items-center gap-2 lg:hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+              <svg
+                className="h-4 w-4 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
+              </svg>
+            </div>
+            <span className="text-base font-bold text-slate-900">
+              Reservify
+            </span>
+          </div>
+
+          <div className="w-full max-w-sm">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                Sign in to your account
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-slate-500">
                 Enter your credentials to access the system.
               </p>
             </div>
 
-            {errorMessage ? (
-              <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-                {errorMessage}
+            {errorMessage && (
+              <div className="mb-5 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                <svg
+                  className="h-4 w-4 shrink-0 text-rose-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <p className="text-sm font-medium text-rose-700">
+                  {errorMessage}
+                </p>
               </div>
-            ) : null}
+            )}
 
             <form action={loginWithCredentials} className="space-y-5">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label
                   htmlFor="email"
-                  className="text-sm font-medium text-slate-700"
+                  className="block text-sm font-semibold text-slate-700"
                 >
-                  Email
+                  Email address
                 </label>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   required
+                  autoComplete="email"
                   placeholder="admin@reservify.local"
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label
                   htmlFor="password"
-                  className="text-sm font-medium text-slate-700"
+                  className="block text-sm font-semibold text-slate-700"
                 >
                   Password
                 </label>
@@ -133,56 +202,45 @@ export default async function LoginPage({ searchParams }: PageProps) {
                   name="password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   placeholder="Enter your password"
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15"
                 />
               </div>
 
               <button
                 type="submit"
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="w-full rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-3 focus:ring-indigo-500/40"
               >
                 Sign in
               </button>
             </form>
 
-            <div className="mt-8 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-              <p className="text-sm font-medium text-slate-700">
+            {/* Quick nav */}
+            <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Demo routes after login
               </p>
-              <div className="mt-3 space-y-2 text-sm text-slate-600">
-                <p>
-                  Dashboard:{" "}
-                  <Link href="/" className="font-medium text-slate-900 underline">
-                    /
-                  </Link>
-                </p>
-                <p>
-                  New booking:{" "}
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                {[
+                  { label: "Dashboard", href: "/" },
+                  { label: "New booking", href: "/bookings/new" },
+                  { label: "My bookings", href: "/bookings" },
+                  { label: "Admin resources", href: "/admin/resources" },
+                ].map((item) => (
                   <Link
-                    href="/bookings/new"
-                    className="font-medium text-slate-900 underline"
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center font-medium text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700"
                   >
-                    /bookings/new
+                    {item.label}
                   </Link>
-                </p>
-                <p>
-                  Admin resources:{" "}
-                  <span className="font-medium text-slate-900">
-                    /admin/resources
-                  </span>
-                </p>
-                <p>
-                  Admin bookings:{" "}
-                  <span className="font-medium text-slate-900">
-                    /admin/bookings
-                  </span>
-                </p>
+                ))}
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

@@ -16,247 +16,263 @@ function formatDateTime(date: Date) {
 }
 
 function getStatusClasses(status: string) {
-  if (status === "APPROVED") {
-    return "bg-emerald-100 text-emerald-700";
-  }
-
-  if (status === "PENDING") {
-    return "bg-amber-100 text-amber-700";
-  }
-
-  if (status === "REJECTED") {
-    return "bg-rose-100 text-rose-700";
-  }
-
-  return "bg-slate-200 text-slate-700";
+  if (status === "APPROVED")
+    return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+  if (status === "PENDING")
+    return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+  if (status === "REJECTED")
+    return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
+  return "bg-slate-100 text-slate-500 ring-1 ring-slate-200";
 }
 
 export default async function AdminBookingsPage() {
   await connection();
 
   const currentUser = await requireUser();
-
-  if (currentUser.role !== "ADMIN") {
-    redirect("/");
-  }
+  if (currentUser.role !== "ADMIN") redirect("/");
 
   const bookings = await prisma.booking.findMany({
     include: {
-      requester: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
+      requester: { select: { id: true, name: true, email: true } },
       resource: true,
       team: true,
     },
-    orderBy: [
-      {
-        status: "asc",
-      },
-      {
-        startTime: "asc",
-      },
-    ],
+    orderBy: [{ status: "asc" }, { startTime: "asc" }],
   });
 
-  const pendingBookings = bookings.filter(
-    (booking) => booking.status === "PENDING",
-  );
-
-  const reviewedBookings = bookings.filter(
-    (booking) => booking.status !== "PENDING",
-  );
+  const pendingBookings = bookings.filter((b) => b.status === "PENDING");
+  const reviewedBookings = bookings.filter((b) => b.status !== "PENDING");
 
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-        <header className="rounded-3xl bg-slate-900 px-6 py-8 text-white shadow-lg sm:px-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-200">
-                  Admin workspace
-                </span>
-                <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-slate-200">
-                  {currentUser.name}
-                </span>
-              </div>
-
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Booking review
-                </h1>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                  Review pending resource requests and record an approval decision.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+    <div className="min-h-screen bg-slate-50">
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+              <svg
+                className="h-4 w-4 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
               >
-                Dashboard
-              </Link>
-
-              <Link
-                href="/bookings"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
-                My bookings
-              </Link>
-
-              <form action={logoutUser}>
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl border border-rose-300/25 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/10"
-                >
-                  Logout
-                </button>
-              </form>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
+              </svg>
             </div>
+            <Link
+              href="/"
+              className="text-base font-bold tracking-tight text-slate-900"
+            >
+              Reservify
+            </Link>
+            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+              Admin
+            </span>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-              <p className="text-sm text-slate-300">Pending review</p>
-              <p className="mt-2 text-3xl font-semibold">
-                {pendingBookings.length}
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-              <p className="text-sm text-slate-300">Reviewed requests</p>
-              <p className="mt-2 text-3xl font-semibold">
-                {reviewedBookings.length}
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-              <p className="text-sm text-slate-300">All requests</p>
-              <p className="mt-2 text-3xl font-semibold">{bookings.length}</p>
-            </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/bookings"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              My Bookings
+            </Link>
+            <Link
+              href="/admin/resources"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              Resources
+            </Link>
+            <form action={logoutUser}>
+              <button
+                type="submit"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Logout
+              </button>
+            </form>
           </div>
-        </header>
+        </div>
+      </nav>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Pending requests
+      <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        {/* Page header */}
+        <div className="mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+              Admin Workspace
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+              {currentUser.name}
+            </span>
+          </div>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
+            Booking Review
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Review pending resource requests and record an approval decision.
+          </p>
+        </div>
+
+        {/* Stat strip */}
+        <div className="mb-4 grid grid-cols-3 gap-3">
+          {[
+            {
+              label: "Pending Review",
+              value: pendingBookings.length,
+              accent: "text-amber-600",
+            },
+            {
+              label: "Reviewed",
+              value: reviewedBookings.length,
+              accent: "text-emerald-600",
+            },
+            { label: "Total", value: bookings.length, accent: "text-indigo-600" },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+            >
+              <p className="text-xs font-medium text-slate-500">{s.label}</p>
+              <p className={`mt-1.5 text-2xl font-bold ${s.accent}`}>
+                {s.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Pending requests */}
+        <section className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-6 py-4">
+            <h2 className="text-base font-semibold text-slate-900">
+              Pending Requests
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Approve only when the requested resource is available for the full
-              requested time range.
+            <p className="mt-0.5 text-sm text-slate-500">
+              Approve only when the resource is available for the full requested
+              time range.
             </p>
           </div>
 
-          <div className="mt-6 space-y-5">
+          <div className="scroll-list divide-y divide-slate-50 px-6 py-2" style={{maxHeight: '36rem'}}>
             {pendingBookings.map((booking) => (
-              <article
-                key={booking.id}
-                className="rounded-2xl border border-amber-200 bg-amber-50 p-5"
-              >
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <article key={booking.id} className="py-4">
+                <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
                   <div>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
-                          booking.status,
-                        )}`}
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getStatusClasses(booking.status)}`}
                       >
                         {booking.status}
                       </span>
-                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                         {booking.resource.type}
                       </span>
                     </div>
 
-                    <h3 className="mt-4 text-xl font-semibold text-slate-900">
+                    <h3 className="mt-3 text-base font-semibold text-slate-900">
                       {booking.resource.name}
                     </h3>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
                       {booking.purpose}
                     </p>
 
-                    <dl className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+                    <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
                       <div>
-                        <dt className="font-medium text-slate-900">Requested by</dt>
-                        <dd className="mt-1">
-                          {booking.requester.name} ({booking.requester.email})
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Requested by
+                        </dt>
+                        <dd className="mt-1 font-medium text-slate-800">
+                          {booking.requester.name}
+                          <span className="block text-xs font-normal text-slate-500">
+                            {booking.requester.email}
+                          </span>
                         </dd>
                       </div>
-
                       <div>
-                        <dt className="font-medium text-slate-900">Team</dt>
-                        <dd className="mt-1">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Team
+                        </dt>
+                        <dd className="mt-1 text-slate-700">
                           {booking.team?.name ?? "No team selected"}
                         </dd>
                       </div>
-
                       <div>
-                        <dt className="font-medium text-slate-900">Start</dt>
-                        <dd className="mt-1">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Start
+                        </dt>
+                        <dd className="mt-1 text-slate-700">
                           {formatDateTime(booking.startTime)}
                         </dd>
                       </div>
-
                       <div>
-                        <dt className="font-medium text-slate-900">End</dt>
-                        <dd className="mt-1">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          End
+                        </dt>
+                        <dd className="mt-1 text-slate-700">
                           {formatDateTime(booking.endTime)}
                         </dd>
                       </div>
-
                       <div>
-                        <dt className="font-medium text-slate-900">Location</dt>
-                        <dd className="mt-1">{booking.resource.location}</dd>
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Location
+                        </dt>
+                        <dd className="mt-1 text-slate-700">
+                          {booking.resource.location}
+                        </dd>
                       </div>
                     </dl>
                   </div>
 
+                  {/* Decision form */}
                   <form
                     action={updateBookingStatus}
-                    className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                   >
-                    <input type="hidden" name="bookingId" value={booking.id} />
-
+                    <input
+                      type="hidden"
+                      name="bookingId"
+                      value={booking.id}
+                    />
                     <label
                       htmlFor={`admin-note-${booking.id}`}
-                      className="text-sm font-semibold text-slate-900"
+                      className="block text-sm font-semibold text-slate-800"
                     >
                       Admin note
                     </label>
-
                     <textarea
                       id={`admin-note-${booking.id}`}
                       name="adminNote"
                       rows={4}
                       placeholder="Optional decision note for the requester"
-                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/15"
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15"
                     />
-
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       <button
                         type="submit"
                         name="status"
                         value="APPROVED"
-                        className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                        className="rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
                       >
-                        Approve
+                        ✓ Approve
                       </button>
-
                       <button
                         type="submit"
                         name="status"
                         value="REJECTED"
-                        className="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+                        className="rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700"
                       >
-                        Reject
+                        ✕ Reject
                       </button>
                     </div>
                   </form>
@@ -264,92 +280,113 @@ export default async function AdminBookingsPage() {
               </article>
             ))}
 
-            {pendingBookings.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  No pending requests
-                </h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  All booking requests have been reviewed. New requests will
-                  appear here when users submit them.
+            {pendingBookings.length === 0 && (
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                  <svg
+                    className="h-5 w-5 text-emerald-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-slate-800">
+                  All caught up!
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  No pending requests. New ones will appear here.
                 </p>
               </div>
-            ) : null}
+            )}
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Recent decisions
+        {/* Reviewed table */}
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-6 py-4">
+            <h2 className="text-base font-semibold text-slate-900">
+              Recent Decisions
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              The most recently scheduled reviewed bookings.
+            <p className="mt-0.5 text-sm text-slate-500">
+              The most recently reviewed bookings.
             </p>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Resource</th>
-                  <th className="px-4 py-3">Requester</th>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Admin note</th>
+          <div className="scroll-list overflow-x-auto" style={{maxHeight: '28rem'}}>
+            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+              <thead>
+                <tr className="bg-slate-50">
+                  {["Resource", "Requester", "Time", "Status", "Admin Note"].map(
+                    (col) => (
+                      <th
+                        key={col}
+                        className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500"
+                      >
+                        {col}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
-
-              <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+              <tbody className="divide-y divide-slate-50 bg-white">
                 {reviewedBookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td className="px-4 py-4 font-medium text-slate-900">
+                  <tr
+                    key={booking.id}
+                    className="transition hover:bg-slate-50"
+                  >
+                    <td className="px-5 py-4 font-medium text-slate-900">
                       {booking.resource.name}
                     </td>
-                    <td className="px-4 py-4">
-                      {booking.requester.name}
-                      <span className="block text-xs text-slate-500">
+                    <td className="px-5 py-4">
+                      <p className="font-medium text-slate-800">
+                        {booking.requester.name}
+                      </p>
+                      <p className="text-xs text-slate-500">
                         {booking.requester.email}
-                      </span>
+                      </p>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="block">
-                        {formatDateTime(booking.startTime)}
-                      </span>
-                      <span className="block text-xs text-slate-500">
+                    <td className="px-5 py-4 text-slate-600">
+                      <p>{formatDateTime(booking.startTime)}</p>
+                      <p className="text-xs text-slate-400">
                         to {formatDateTime(booking.endTime)}
-                      </span>
+                      </p>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-4">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
-                          booking.status,
-                        )}`}
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getStatusClasses(booking.status)}`}
                       >
                         {booking.status}
                       </span>
                     </td>
-                    <td className="max-w-xs px-4 py-4 text-slate-600">
-                      {booking.adminNote ?? "—"}
+                    <td className="max-w-xs px-5 py-4 text-slate-600">
+                      {booking.adminNote ?? (
+                        <span className="text-slate-300">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
-
-                {reviewedBookings.length === 0 ? (
+                {reviewedBookings.length === 0 && (
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-8 text-center text-sm text-slate-500"
+                      className="px-5 py-10 text-center text-sm text-slate-400"
                     >
                       No bookings have been reviewed yet.
                     </td>
                   </tr>
-                ) : null}
+                )}
               </tbody>
             </table>
           </div>
         </section>
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }
