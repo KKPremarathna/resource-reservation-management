@@ -75,30 +75,13 @@ export default async function AdminBookingsPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/bookings"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-            >
-              My Bookings
-            </Link>
-            <Link
-              href="/admin/resources"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-            >
-              Resources
-            </Link>
+          <div className="flex items-center gap-1">
+            <Link href="/" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100">Dashboard</Link>
+            <Link href="/admin/calendar" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100">Calendar</Link>
+            <Link href="/admin/bookings" className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100">Review Bookings</Link>
+            <Link href="/admin/resources" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100">Resources</Link>
             <form action={logoutUser}>
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
+              <button type="submit" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
                 Logout
               </button>
             </form>

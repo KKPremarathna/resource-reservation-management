@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
@@ -11,6 +12,9 @@ export default async function NewBookingPage() {
   await connection();
 
   const currentUser = await requireUser();
+
+  // Admins manage resources — they do not create bookings
+  if (currentUser.role === "ADMIN") redirect("/admin/resources");
 
   const [resources, teams] = await Promise.all([
     prisma.resource.findMany({
