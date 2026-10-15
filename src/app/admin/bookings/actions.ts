@@ -1,21 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 
 type BookingDecision = "APPROVED" | "REJECTED";
-
-async function requireAdmin() {
-  const currentUser = await requireUser();
-
-  if (currentUser.role !== "ADMIN") {
-    redirect("/");
-  }
-
-  return currentUser;
-}
 
 export async function updateBookingStatus(formData: FormData) {
   await requireAdmin();

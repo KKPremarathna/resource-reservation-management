@@ -2,17 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
-
-async function requireAdminUser() {
-  const currentUser = await requireUser();
-
-  if (currentUser.role !== "ADMIN") {
-    throw new Error("Only admins can manage resources.");
-  }
-
-  return currentUser;
-}
+import { requireAdmin } from "@/lib/auth";
 
 function getString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -55,7 +45,7 @@ function validateResourceStatus(status: string) {
 }
 
 export async function createResource(formData: FormData) {
-  await requireAdminUser();
+  await requireAdmin();
 
   const name = getString(formData, "name");
   const type = validateResourceType(getString(formData, "type"));
@@ -85,7 +75,7 @@ export async function createResource(formData: FormData) {
 }
 
 export async function updateResource(formData: FormData) {
-  await requireAdminUser();
+  await requireAdmin();
 
   const resourceId = getString(formData, "resourceId");
   const name = getString(formData, "name");

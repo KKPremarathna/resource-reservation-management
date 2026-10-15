@@ -1,113 +1,83 @@
-  generator client {
-    provider = "prisma-client"
-    output   = "../src/generated/prisma"
-  }
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
 
-  datasource db {
-    provider = "postgresql"
-  }
+datasource db {
+  provider = "postgresql"
+}
 
-  enum UserRole {
-    ADMIN
-    INDIVIDUAL
-  }
+enum UserRole {
+  ADMIN
+  INDIVIDUAL
+}
 
-  enum ResourceType {
-    FACILITY
-    RESOURCE
-  }
+enum ResourceType {
+  FACILITY
+  RESOURCE
+}
 
-  enum ResourceStatus {
-    AVAILABLE
-    MAINTENANCE
-    INACTIVE
-  }
+enum ResourceStatus {
+  AVAILABLE
+  MAINTENANCE
+  INACTIVE
+}
 
-  enum BookingStatus {
-    PENDING
-    APPROVED
-    REJECTED
-    CANCELLED
-  }
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
 
-  model User {
-    id           String   @id @default(cuid())
-    name         String
-    email        String   @unique
-    passwordHash String?
-    role         UserRole @default(INDIVIDUAL)
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String?
+  role         UserRole  @default(INDIVIDUAL)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[] @relation("BookingRequester")
+}
 
-    bookings      Booking[]      @relation("BookingRequester")
-    ownedTeams    Team[]         @relation("TeamOwner")
-    teamMembers   TeamMember[]
-    notifications Notification[]
-  }
+model Team {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+}
 
-  model Team {
-    id        String       @id @default(cuid())
-    name      String
-    ownerId   String
-    createdAt DateTime     @default(now())
-    updatedAt DateTime     @updatedAt
-    owner     User         @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-    members   TeamMember[]
-    bookings  Booking[]
-  }
+model Resource {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  type        ResourceType
+  location    String
+  capacity    Int?
+  status      ResourceStatus @default(AVAILABLE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  bookings    Booking[]
+}
 
-  model TeamMember {
-    id       String   @id @default(cuid())
-    teamId   String
-    userId   String
-    joinedAt DateTime @default(now())
-    team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Booking {
+  id          String        @id @default(cuid())
+  resourceId  String
+  requesterId String
+  teamId      String?
+  startTime   DateTime
+  endTime     DateTime
+  purpose     String
+  status      BookingStatus @default(PENDING)
+  adminNote   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  resource    Resource      @relation(fields: [resourceId], references: [id], onDelete: Restrict)
+  requester   User          @relation("BookingRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  team        Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
 
-    @@unique([teamId, userId])
-  }
-
-  model Resource {
-    id          String         @id @default(cuid())
-    name        String
-    description String?
-    type        ResourceType
-    location    String
-    capacity    Int?
-    status      ResourceStatus @default(AVAILABLE)
-    createdAt   DateTime       @default(now())
-    updatedAt   DateTime       @updatedAt
-    bookings    Booking[]
-  }
-
-  model Booking {
-    id            String         @id @default(cuid())
-    resourceId    String
-    requesterId   String
-    teamId        String?
-    startTime     DateTime
-    endTime       DateTime
-    purpose       String
-    status        BookingStatus  @default(PENDING)
-    adminNote     String?
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @updatedAt
-    resource      Resource       @relation(fields: [resourceId], references: [id], onDelete: Restrict)
-    requester     User           @relation("BookingRequester", fields: [requesterId], references: [id], onDelete: Restrict)
-    team          Team?          @relation(fields: [teamId], references: [id], onDelete: SetNull)
-    notifications Notification[]
-
-    @@index([resourceId, startTime, endTime])
-    @@index([requesterId, status])
-  }
-
-  model Notification {
-    id        String   @id @default(cuid())
-    userId    String
-    bookingId String?
-    message   String
-    isRead    Boolean  @default(false)
-    createdAt DateTime @default(now())
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  }
+  @@index([resourceId, startTime, endTime])
+  @@index([requesterId, status])
+}

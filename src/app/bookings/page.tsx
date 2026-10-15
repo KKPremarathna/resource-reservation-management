@@ -2,7 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { logoutUser } from "@/app/login/actions";
+import Navbar from "@/components/Navbar";
 import { cancelBooking } from "./actions";
 import BookingCalendar from "./BookingCalendar";
 
@@ -54,30 +54,7 @@ export default async function MyBookingsPage() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
       {/* ── Navbar ── */}
-      <nav className="shrink-0 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-              <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-              </svg>
-            </div>
-            <Link href="/" className="text-base font-bold tracking-tight text-slate-900">Reservify</Link>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Link href="/" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100">Dashboard</Link>
-            <Link href="/bookings/new" className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
-              + New Booking
-            </Link>
-            <form action={logoutUser}>
-              <button type="submit" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-                Logout
-              </button>
-            </form>
-          </div>
-        </div>
-      </nav>
+      <Navbar user={currentUser} activePath="/bookings" />
 
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-hidden px-4 pb-4 pt-4 sm:px-6 lg:px-8">
         {/* ── Page header + stats ── */}

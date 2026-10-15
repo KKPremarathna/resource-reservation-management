@@ -23,9 +23,7 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  await prisma.notification.deleteMany();
   await prisma.booking.deleteMany();
-  await prisma.teamMember.deleteMany();
   await prisma.team.deleteMany();
   await prisma.resource.deleteMany();
   await prisma.user.deleteMany();
@@ -72,25 +70,7 @@ async function main() {
   const engineeringTeam = await prisma.team.create({
     data: {
       name: "Engineering Team",
-      ownerId: systemAdmin.id,
     },
-  });
-
-  await prisma.teamMember.createMany({
-    data: [
-      {
-        teamId: engineeringTeam.id,
-        userId: kavindu.id,
-      },
-      {
-        teamId: engineeringTeam.id,
-        userId: kavishka.id,
-      },
-      {
-        teamId: engineeringTeam.id,
-        userId: nimalPerera.id,
-      },
-    ],
   });
 
   const conferenceRoom = await prisma.resource.create({
@@ -148,13 +128,6 @@ async function main() {
       startTime: new Date("2026-10-16T13:00:00.000Z"),
       endTime: new Date("2026-10-16T15:00:00.000Z"),
       status: BookingStatus.PENDING,
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      userId: kavishka.id,
-      message: "Your booking request for Training Lab is pending admin approval.",
     },
   });
 
