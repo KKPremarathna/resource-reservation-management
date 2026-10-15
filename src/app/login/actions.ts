@@ -43,9 +43,9 @@ export async function loginWithCredentials(formData: FormData) {
     {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: 60 * 60 * 8,
+      maxAge: 60 * 60 * 8, // 8 hours
     },
   );
 

@@ -1,4 +1,6 @@
+import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import {
   PrismaClient,
   ResourceStatus,
@@ -8,19 +10,22 @@ import {
 } from "../src/generated/prisma/client";
 import bcrypt from "bcryptjs";
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString =
+  process.env.DIRECT_URL ||
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL is not defined.");
+  throw new Error("Neither DIRECT_URL nor DATABASE_URL is defined.");
 }
 
-const adapter = new PrismaPg({
+const pool = new Pool({
   connectionString,
+  connectionTimeoutMillis: 15000,
 });
 
-const prisma = new PrismaClient({
-  adapter,
-});
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   await prisma.booking.deleteMany();
@@ -133,6 +138,7 @@ async function main() {
 
   console.log("Seeded users:", systemAdmin.name, kavindu.name, kavishka.name, nimalPerera.name);
   console.log("Seeded resources:", conferenceRoom.name, trainingLab.name, projector.name);
+  console.log("Seeded team:", engineeringTeam.name);
 }
 
 main()
@@ -142,4 +148,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

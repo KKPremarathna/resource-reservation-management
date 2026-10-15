@@ -9,28 +9,51 @@ type SessionPayload = {
 };
 
 function parseSessionValue(value: string): SessionPayload | null {
-  try {
-    const parsed = JSON.parse(value) as SessionPayload;
-
-    if (parsed && typeof parsed.userId === "string") {
-      return parsed;
-    }
-
-    return null;
-  } catch {
+  if (!value || typeof value !== "string") {
     return null;
   }
+
+  let raw = value.trim();
+
+  if (raw.includes("%")) {
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      // Keep raw if decodeURIComponent fails
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.userId === "string" && parsed.userId.trim()) {
+      return { userId: parsed.userId.trim() };
+    }
+  } catch {
+    // Not JSON
+  }
+
+  // Fallback: check if raw is a plain alphanumeric/cuid userId string
+  if (raw && !raw.startsWith("{") && !raw.includes(" ") && !raw.includes(";")) {
+    return { userId: raw };
+  }
+
+  return null;
 }
 
-export async function getSession() {
-  const cookieStore = await cookies();
-  const raw = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+export async function getSession(): Promise<SessionPayload | null> {
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get(AUTH_COOKIE_NAME)?.value;
 
-  if (!raw) {
+    if (!raw) {
+      return null;
+    }
+
+    return parseSessionValue(raw);
+  } catch (error) {
+    console.error("Error reading session cookie:", error);
     return null;
   }
-
-  return parseSessionValue(raw);
 }
 
 export async function getCurrentUser() {
@@ -40,15 +63,20 @@ export async function getCurrentUser() {
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+    });
 
-  if (!user) {
+    if (!user) {
+      return null;
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error fetching current user from database:", error);
     return null;
   }
-
-  return user;
 }
 
 export async function requireUser() {
