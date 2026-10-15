@@ -29,55 +29,7 @@ Organizations frequently struggle with resource contention, double-booking, and 
 
 ## 📊 Database Design (Entity-Relationship)
 
-```mermaid
-erDiagram
-    User ||--o{ Booking : "requests"
-    Team ||--o{ Booking : "associated with"
-    Resource ||--o{ Booking : "reserved in"
-
-    User {
-        String id PK "cuid"
-        String name
-        String email UK
-        String passwordHash
-        UserRole role "ADMIN | INDIVIDUAL"
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    Team {
-        String id PK "cuid"
-        String name
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    Resource {
-        String id PK "cuid"
-        String name
-        String description
-        ResourceType type "FACILITY | RESOURCE"
-        String location
-        Int capacity
-        ResourceStatus status "AVAILABLE | MAINTENANCE | INACTIVE"
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    Booking {
-        String id PK "cuid"
-        String resourceId FK
-        String requesterId FK
-        String teamId FK "Nullable"
-        DateTime startTime
-        DateTime endTime
-        String purpose
-        BookingStatus status "PENDING | APPROVED | REJECTED | CANCELLED"
-        String adminNote
-        DateTime createdAt
-        DateTime updatedAt
-    }
-```
+![Reservify ER Diagram](./assets/Reservify_ER_Diagram.png)
 
 ---
 
