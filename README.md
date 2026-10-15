@@ -29,7 +29,7 @@ Organizations frequently struggle with resource contention, double-booking, and 
 
 ## 📊 Database Design (Entity-Relationship)
 
-![Reservify ER Diagram](./assets/Reservify_ER_Diagram.png)
+![Reservify ER Diagram](./assets/reservify-er-diagram.png)
 
 ---
 
